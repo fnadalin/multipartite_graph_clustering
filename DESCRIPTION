@@ -2,3 +2,4 @@ Package: multiGraphClust
 Type: Package
 Title: Clustering of multi-partite graphs
 Version: 0.1.0
+RoxygenNote: 7.1.2

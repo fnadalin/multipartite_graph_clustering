@@ -4,10 +4,15 @@ library("Matrix")
 
 EPSILON <- 0.0000001
 
-# parse a named, ordered list of bipartite graph file names and store it into a 0-diagonal, symmetric block matrix
-# the matrices must be parsed in row order and then column order
-# N.B. the # of columns of vertex set i must equate the # of rows of vertex set i+1
-# N.B. rownames, colnames: auto-detected, but not used
+#' ParseMultipartiteGraphList
+#'
+#' Parse a named, ordered list of bipartite graph file names and store it into a 0-diagonal, symmetric block matrix
+#' The matrices must be parsed in row order and then column order
+#' N.B. 1) the # of columns of vertex set i must equate the # of rows of vertex set i+1
+#'      2) rownames, colnames: auto-detected, but not used
+#' @param file.list txt file containing the matrices
+#' @return the upper-triangular block matrix and the block ID for each row/column
+#' @export
 ParseMultipartiteGraphList <- function(file.list) {
 
     # get the nunber of blocks per row
@@ -29,7 +34,7 @@ ParseMultipartiteGraphList <- function(file.list) {
             data <- read.table(file = f, sep = "\t")
         }
         i <- i + 1
-        block_id <- c(block_id, rep(i,ncol(data))
+        block_id <- c(block_id, rep(i,ncol(data)))
     }
     block_id <- c(rep(1,nrow(data)), block_id)
     tot <- length(block_id)
@@ -69,8 +74,13 @@ ParseMultipartiteGraphList <- function(file.list) {
     return(list("matrix" = M, "block_id" = block_id))
 }
 
-# load a matrix or a sparse matrix (Matrix object) and store it into an igraph object
-# load also the metadata associated to the nodes (i.e. the vertex sets of the multi-partite graph)
+#' LoadGraph
+#'
+#' Load a matrix or a sparse matrix (Matrix object) and store it into an igraph object
+#' Load also the metadata associated to the nodes (i.e. the vertex sets of the multi-partite graph)
+#' @param M the upper-triangular block matrix created with ParseMultipartiteGraphList
+#' @return a graph structure
+#' @export
 LoadGraph <- function(M) {
 
     # also checks that the matrix is symmetric
@@ -89,6 +99,19 @@ WriteGraph <- function(G, filename) {
     } else {
         writeMM(obj = M, file = filename)
     }
+}
+
+#' PrintMultipartiteClustering
+#'
+#' Print the clusters, one per line
+#' @param cluster.list The output of MultipartiteClustering
+#' @file.name output txt file
+#' @return nothing
+#' @export
+PrintMultipartiteClustering <- function(cluster.list, file.name) {
+
+    v <- sapply(cluster.list, function(x) paste(unlist(x[["solution"]]), collapse = ","))
+    write(v, file = file.name)
 }
 
 

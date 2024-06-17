@@ -1,1 +1,1 @@
-# multipartite_graph_clustering
+# Multipartite graph clustering

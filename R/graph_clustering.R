@@ -3,14 +3,19 @@ library("Matrix")
 
 INFTY <- 100000
 
-# iterative procedure to find all clusters
+#' MultipartiteClustering
+#'
+#' Iterative procedure to find all clusters
+#' @param g The input graph
+#' @return The list of clusters and their values
+#' @export
 MultipartiteClustering <- function(g) {
 
     all_zero <- FALSE
     global_l <- list()
     g <- GraphInit(g)
     i <- 1
-    while (length(V(g)) > 0 || !all_zero) {
+    while (length(V(g)) > 0 & !all_zero) {
         cat(paste("length(V(g)):", length(V(g)), "\n"))
         val <- MultipartiteBestCluster(g)
         l <- val[["cluster"]]
@@ -24,6 +29,11 @@ MultipartiteClustering <- function(g) {
     return(global_l)
 }
 
+#' GraphInit
+#'
+#' @param g The input graph
+#' @return The same graph with "id" field
+#' @export
 GraphInit <- function(g) {
 
     V(g)$id <- 1:length(V(g))
@@ -31,7 +41,12 @@ GraphInit <- function(g) {
     return(g)
 }
 
-# algorithm to find the best cluster from the current node selection
+#' MultipartiteBestCluster
+#'
+#' Algorithm to find the best cluster from the current node selection
+#' @param g The input graph
+#' @return List containing the graph and the cluster
+#' @export
 MultipartiteBestCluster <- function(g) {
 
     g <- LinkageFunctionInit(g)
@@ -57,13 +72,23 @@ MultipartiteBestCluster <- function(g) {
     return(list("graph" = g, "cluster" = l)) 
 }
 
+#' AllZero
+#'
+#' @param g The input graph
+#' @return boolean value indicating whether all active nodes are 0 or not
+#' @export
 AllZero <- function(g) {
 
     zero_val <- which(LinkageVal(g, GetNodesInH(g)) == 0)
     return(length(zero_val) == length(GetNodesInH(g)))
 }
 
-# return a vector where the components are the values of the linkage function computed on each node of the graph
+#' LinkageFunctionInit
+#'
+#' Computes the values of the linkage function on each node of the graph
+#' @param g The input graph
+#' @return The same graph with "linkage.value" field
+#' @export
 LinkageFunctionInit <- function(g) {
 
     # initialise the optimal set
@@ -74,7 +99,13 @@ LinkageFunctionInit <- function(g) {
     return(g)
 }
 
-# remove the node indexes (1-based) and update the linkage function
+#' LinkageFunctionUpdate
+#'
+#' Remove the node indexes (1-based) and update the linkage function
+#' @param g The input graph
+#' @param node.id node IDs to be removed from the active nodes
+#' @return The same graph with "linkage.value" field updated
+#' @export
 LinkageFunctionUpdate <- function(g, node.id) {
 
     node.idx <- Idx2Id(g, node.id)
@@ -92,7 +123,12 @@ LinkageFunctionUpdate <- function(g, node.id) {
     return(g)
 }
 
-# find the node with the minimum linkage value
+#' FindArgMinLinkage
+#'
+#' Find the node with the minimum linkage value
+#' @param g The input graph
+#' @return ID of the node with min linkage value
+#' @export
 FindArgMinLinkage <- function(g) {
 
     val <- min(V(g)$linkage.value[V(g)$is.inH])
@@ -100,6 +136,12 @@ FindArgMinLinkage <- function(g) {
     return(Idx2Id(g, idx))
 }
 
+#' LinkageVal
+#'
+#' @param g The input graph
+#' @param node.id the ID of the node(s)
+#' @return linkage value for node.id
+#' @export
 LinkageVal <- function(g, node.id) {
 
     node.idx <- Id2Idx(g, node.id)
@@ -107,6 +149,12 @@ LinkageVal <- function(g, node.id) {
     return(V(g)$linkage.value[node.idx])
 }
 
+#' DeleteNodes
+#'
+#' @param g The input graph
+#' @param node.id the ID of the node(s)
+#' @return graph with node.id deleted
+#' @export
 DeleteNodes <- function(g, node.id) {
 
     node.idx <- Id2Idx(g, node.id)
@@ -114,12 +162,23 @@ DeleteNodes <- function(g, node.id) {
     return(g)
 }
 
+#' GetNodesInH
+#'
+#' @param g The input graph
+#' @return The sequence of active nodes
+#' @export
 GetNodesInH <- function(g) {
 
     idx <- as_ids(V(g)[V(g)$is.inH])
     return(Idx2Id(g, idx))
 }
 
+#' GetNodesInH
+#'
+#' @param g The input graph
+#' @param node.id The sequence of nodes
+#' @return the same graph with node.id nodes active
+#' @export
 SetNodesInH <- function(g, node.id) {
 
     idx <- Id2Idx(g, node.id)
@@ -127,6 +186,12 @@ SetNodesInH <- function(g, node.id) {
     return(g)
 }
 
+#' Id2Idx
+#'
+#' @param g The input graph
+#' @param node.id The sequence of node IDs
+#' @return node.idx corresponding to node.id
+#' @export
 Id2Idx <- function(g, node.id) {
 
     if (sum(V(g)$id %in% node.id) < length(node.id)) {
@@ -135,6 +200,12 @@ Id2Idx <- function(g, node.id) {
     return(as_ids(V(g)[match(node.id,V(g)$id)]))
 }
 
+#' IdxId
+#'
+#' @param g The input graph
+#' @param node.idx The sequence of node indexes (1-based)
+#' @return node.id corresponding to node.idx
+#' @export
 Idx2Id <- function(g, node.idx) {
 
     if (length(node.idx) == 0) {
