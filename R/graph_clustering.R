@@ -11,20 +11,24 @@ INFTY <- 100000
 #' @export
 MultipartiteClustering <- function(g) {
 
-    all_zero <- FALSE
+    cat("--- Multipartite graph clustering ---\n")
     global_l <- list()
     g <- GraphInit(g)
     i <- 1
-    while (length(V(g)) > 0 & !all_zero) {
-        cat(paste("length(V(g)):", length(V(g)), "\n"))
+    while (length(V(g)) > 0) {
+        cat(paste("iteration", i, "- number of vertices:", length(V(g)), "\n"))
+        g <- LinkageFunctionInit(g)
+        if (AllZero(g)) {
+            break
+        }
         val <- MultipartiteBestCluster(g)
         l <- val[["cluster"]]
         g <- val[["graph"]]
         global_l[[i]] <- l
         g <- DeleteNodes(g, GetNodesInH(g))
-        all_zero <- AllZero(g)
         i <- i + 1
     }
+    cat(paste("--- Finished:", length(global_l), "clusters found ---\n"))
     
     return(global_l)
 }
@@ -49,9 +53,9 @@ GraphInit <- function(g) {
 #' @export
 MultipartiteBestCluster <- function(g) {
 
-    g <- LinkageFunctionInit(g)
     Gamma <- c()
     FGamma <- -INFTY
+    cat("Compute the best cluster\n")
     while (length(GetNodesInH(g)) > 0) {
         Mt <- FindArgMinLinkage(g)
         FHt <- LinkageVal(g, Mt)[1]
@@ -60,13 +64,14 @@ MultipartiteBestCluster <- function(g) {
             break
         } else {
             g <- LinkageFunctionUpdate(g = g, node.id = Mt)
-            if (FHt > FGamma) { 
+            if (FHt > FGamma) {
                 Gamma <- GetNodesInH(g)
                 FGamma <- FHt
             }
         }
     }
     g <- SetNodesInH(g, node.id = Gamma)
+    cat(paste("Solution:", length(Gamma), "nodes, value:", FGamma, "\n"))
     
     l <- list("solution" = Gamma, "value" = FGamma)
     return(list("graph" = g, "cluster" = l)) 
@@ -91,6 +96,7 @@ AllZero <- function(g) {
 #' @export
 LinkageFunctionInit <- function(g) {
 
+    cat("Initialise the linkage function\n")
     # initialise the optimal set
     V(g)$is.inH <- rep(TRUE, length(V(g)))
     # initialise the linkage value = sum of the weights of incident edges, for every node
@@ -108,18 +114,20 @@ LinkageFunctionInit <- function(g) {
 #' @export
 LinkageFunctionUpdate <- function(g, node.id) {
 
-    node.idx <- Idx2Id(g, node.id)
+    node.idx <- Id2Idx(g, node.id)
     V(g)$is.inH[node.idx] <- FALSE
     edges1 <- unlist(incident_edges(g, node.idx)) # edges incident in node.idx
     edges2 <- unlist(incident_edges(g, V(g)[V(g)$is.inH])) # edges incident in any node of H
     edges <- edges1[edges1 %in% edges2] # edges connecting node.idx and all the nodes in H
-    nodes <- c(ends(g, edges))
-    nodes <- nodes[!(nodes %in% node.idx)] # nodes adjacent to node.idx, in the same order as the edges, with repeats
-    val_edges <- edge_attr(g, "weight", edges) # weight of the edges incident to the nodes above
-    idx <- unique(nodes)
-    val <- sapply(idx, function(x) sum(val_edges[nodes == x])) # each entry is the sum for the nodes in H
-    V(g)$linkage.value[idx] <- V(g)$linkage.value[idx] - 2*val
-
+    if (length(edges) > 0) { # the graph is not complete because edges with weight = 0 are removed by LoadGraph()
+        nodes <- c(ends(g, edges))
+        nodes <- nodes[!(nodes %in% node.idx)] # nodes adjacent to node.idx, in the same order as the edges, with repeats
+        val_edges <- edge_attr(g, "weight", edges) # weight of the edges incident to the nodes above
+        idx <- unique(nodes)
+        val <- sapply(idx, function(x) sum(val_edges[nodes == x])) # each entry is the sum for the nodes in H
+        V(g)$linkage.value[idx] <- V(g)$linkage.value[idx] - 2*val
+    }
+    
     return(g)
 }
 

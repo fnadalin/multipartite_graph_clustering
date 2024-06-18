@@ -53,6 +53,7 @@ ParseMultipartiteGraphList <- function(file.list) {
             } else {
                 data <- as.matrix(read.table(file = f, sep = "\t"))
             }
+            data[which(is.na(data))] <- rep(0, sum(is.na(data)))
             if (!is.na(prev.col) & prev.col != nrow(data)) { # check that the dimensions of the blocks are consistent
                 stop("Column number of previous matrix and row number of current matrix differ\n")
             }
@@ -105,13 +106,17 @@ WriteGraph <- function(G, filename) {
 #'
 #' Print the clusters, one per line
 #' @param cluster.list The output of MultipartiteClustering
-#' @file.name output txt file
+#' @param file.name output txt file
 #' @return nothing
 #' @export
 PrintMultipartiteClustering <- function(cluster.list, file.name) {
 
-    v <- sapply(cluster.list, function(x) paste(unlist(x[["solution"]]), collapse = ","))
-    write(v, file = file.name)
+    id <- 1:length(cluster.list)
+    nhg_list <- sapply(cluster.list, function(x) paste(unlist(x[["solution"]]), collapse = ","))
+    nhg_num <- sapply(cluster.list, function(x) length(x[["solution"]]))
+    value <- sapply(cluster.list, function(x) x[["value"]])
+    df <- data.frame(id = id, nhg.num = nhg_num, value = value, nhg.list = nhg_list)
+    write.table(df, file = file.name, quote = FALSE, sep = "\t", row.names = FALSE)
 }
 
 

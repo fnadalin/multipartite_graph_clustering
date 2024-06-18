@@ -1,6 +1,6 @@
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) < 3) {
+if (length(args) < 2) {
     cat("\nUsage: <file_list> <out>\n")
     q()
 }
@@ -9,10 +9,14 @@ FILE_LIST <- args[1]
 OUT_PREFIX <- args[2]
 
 library("multiGraphClust")
+library("tools")
+library("igraph")
+library("Matrix")
 
 file.list <- as.list(read.table(FILE_LIST)[,1])
 val <- ParseMultipartiteGraphList(file.list)
 M <- val[["matrix"]]
+M <- round(M, digits = 2) # does not make much sense to consider all decimal digits
 g <- LoadGraph(M)
 
 block_id <- val[["block_id"]]
@@ -24,7 +28,7 @@ write(block_id, file = out)
 global_l <- MultipartiteClustering(g)
 
 # save to file
-out <- paste0(OUT_PREFIX, "_out.txt")
+out <- paste0(OUT_PREFIX, "_out.tsv")
 PrintMultipartiteClustering(cluster.list = global_l, file.name = out)
 
 q()
